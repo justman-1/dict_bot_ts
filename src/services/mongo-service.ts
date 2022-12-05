@@ -1,4 +1,4 @@
-import { DictObj } from "../types"
+import { DictObj, WordObj } from "../types"
 
 import User from "../configs/mongo"
 
@@ -9,21 +9,22 @@ class Mongo {
   }
 
   async isUserRegistered(id: number): Promise<boolean>{
-    const result = await User.findOne({ id: id }, ["id"])
-    return result
+    const result: { id: string } | null
+      = await User.findOne({ id: id }, ["id"])
+    return (result) ? true : false
   }
 
   async registerUser(id: number): Promise<void> {
-    await User.create({ id: id, words: [] })
+    await User.create({ id: id, dict: [] })
   }
 
   async saveDictionary(id: number, dict: DictObj): Promise<void> {
-    await User.updateOne({ id: id }, { words: dict })
+    await User.updateOne({ id: id }, { dict: dict })
   }
 
-  async getDict(id: number): Promise<DictObj> {
-    let words = (await User.findOne({ id: id }, ["dict"])).dict
-    return words
+  async getDict(id: number): Promise<DictObj | null> {
+    const user = await User.findOne({ id: id }, ["dict"])
+    return (user) ? user.dict : null
   }
 }
 

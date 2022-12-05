@@ -15,13 +15,14 @@ class Forming {
           : "Переводы слов из вашего словаря"
       }${wordsIndex != 0 ? "(последние 30 слов)" : ""}: \n`
       dict.forEach((part, index) => {
+        const state: string = (part.tested != 2) ? "" : " ✅" 
         wordsStr +=
           +index +
           +1 +
           wordsIndex +
           ". " +
           (type == "default"
-            ? part.words[0] + " - " + part.words[1]
+            ? part.words[0] + " - " + part.words[1] + state
             : type == "eng"
             ? part.words[0]
             : part.words[1]) +
@@ -55,8 +56,41 @@ class Forming {
       return result
     }
   
+    formTestWordsIndexesArr(words: DictObj): number[] {
+    const notChecked: DictObj = words.filter(e => e.tested != 2)
+    let numOfNullTested: number = //we check pairs with 0 index
+      (notChecked.length >= 25 && notChecked.length <= 50)
+      ? Math.floor(notChecked.length * 0.2)
+      : (notChecked.length <= 25 && notChecked.length >= 5) ? 5
+      : (notChecked.length < 5) ? notChecked.length 
+      : 10
+    var testWordsIndexes: number[] = notChecked
+      .filter(e => e.tested != 2)
+      .map((e, i) => {
+        e.index = i
+        return e
+      })
+      .sort((a, b) => {
+        if (a.tested == 0 && numOfNullTested > 0) {//at start 0
+            numOfNullTested -= 1
+            return -1
+          }
+          else if(numOfNullTested > 0){
+            return 1
+        }
+        else {
+          return b.tested - a.tested
+        }
+      })
+      .map(e => {
+        return e?.index || 0
+      })
+      return testWordsIndexes
+    }
+  
+  
     #formDeleteRangesToArray(indexesStr: string): number[] {
-      const ranges: any = indexesStr
+      const ranges: (number[] | undefined)[] = indexesStr
         .split(" ")
         .filter((e) => e.match(/(\d+)-(\d+)/))
         .map((e) => {
@@ -87,7 +121,7 @@ class Forming {
         }) || []
       let rangesIndexes: number[] = []
       for (let i = 0; i < ranges.length; i++) {
-          rangesIndexes = rangesIndexes.concat(ranges[i])
+        rangesIndexes = rangesIndexes.concat(ranges[i] || [])
       }
       return rangesIndexes
     }

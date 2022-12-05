@@ -9,11 +9,13 @@ class Dictionary {
   getLast30Words: (id: number) => Promise<WordsGetObj>
   getAllWords: (id: number) => Promise<DictObj>
   saveDictionary: (id: number, dict: DictObj) => Promise<void>
+  getTestWord: (id: number, words: DictObj) => WordObj | -1 | undefined
   constructor() {
     this.getDictionaryObj = this.#getDictionaryObj.bind(this)
     this.getLast30Words = this.#getLast30Words.bind(this)
     this.getAllWords = this.#getAllWords.bind(this)
     this.saveDictionary = this.#saveDictionary.bind(this)
+    this.getTestWord = this.#getTestWord.bind(this)
   }
 
   async show(id: number, type: string): Promise<string> {
@@ -66,7 +68,7 @@ class Dictionary {
         })
         if (index != -1) {
           dict[index].words[1] = wordsToChange[1]
-          await this.saveDictionary(id, dict)
+          this.saveDictionary(id, dict)
           return true
         }
     }
@@ -83,10 +85,23 @@ class Dictionary {
     return indexes.length
   }
 
+  async returnTestWord(id: number): Promise<WordObj | undefined | -1> {
+    let words: DictObj = await this.getDictionaryObj(id)
+    const isTest: boolean = Cache.isTest(id)
+    if (isTest) {
+      return this.getTestWord(id, words)
+    }
+    else {
+      var testWordsIndexes = Forming.formTestWordsIndexesArr(words)
+      Cache.setTestInfo(id, testWordsIndexes)
+      return this.getTestWord(id, words)
+    }
+  }
+
   async #getDictionaryObj(id: number): Promise<DictObj> {
-    var dict: DictObj | undefined = Cache.getDict(id)
+    var dict: DictObj | null = Cache.getDict(id)
     if (!dict) {
-      var dict: DictObj | undefined = await mongo.getDict(id)
+      dict = await mongo.getDict(id)
       if (!dict) throw new Error("mongo error maybe")
       Cache.setDict(id, dict)
       return dict
@@ -112,6 +127,15 @@ class Dictionary {
   async #getAllWords(id: number): Promise<DictObj> {
     let words: DictObj = await this.getDictionaryObj(id)
     return words
+  }
+
+  #getTestWord(id: number, words: DictObj): WordObj | -1 | undefined {
+    const index = Cache.getTestIndex(id)
+    if (index != undefined) {
+      Cache.setMoreTestIndex(id)
+      return words[index] || -1
+    }
+    return undefined
   }
 }
 

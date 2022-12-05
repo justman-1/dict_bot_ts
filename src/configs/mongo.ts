@@ -1,19 +1,28 @@
-import { UserObj } from "../types/index"
+import { UserObj, WordObj } from "../types/index"
+import mongoose, { Schema, Model, Types } from "mongoose"
 
-let mongoose = require("mongoose")
-const Schema = mongoose.Schema
 let mongoPath = (dbName: string) => {
   return `mongodb+srv://user1:user@example.7j3yd.mongodb.net/${dbName}?retryWrites=true&w=majority`
 }
 
-const userScheme = new Schema({
-  id: Number,
+interface User1 {
+  _id: Types.ObjectId
+  id: string
   dict: [
-    {
-      words: [String, String],
-      tested: Number,
-    },
-  ],
+    Types.DocumentArray<WordObj>
+  ];
+}
+
+const userScheme = new Schema({
+  id: {type: Number, required: true},
+  dict: {
+    type:
+      [{
+        words: { type: [String, String], required: true },
+        tested: { type: Number, required: true }
+      }],
+    required: true
+  },
 })
 
 const User = mongoose.model("User", userScheme)
@@ -24,12 +33,9 @@ class Connect {
     this.localConnect = this.localConnect.bind(this)
   }
 
-  async remoteConnect(dbName: string) {
+  async remoteConnect(dbName: string): Promise<void> {
     await mongoose
-      .connect(mongoPath(dbName), {
-        useNewUrlParser: true,
-        useUnifiedTopology: true,
-      })
+      .connect(mongoPath(dbName))
       .then((MongoClient: any) => {
         try {
           console.log("Connected to mongoDB!")
@@ -38,21 +44,18 @@ class Connect {
       })
   }
 
-  async localConnect(dbName: string) {
-    await mongoose.connect(`mongodb://localhost:27017/${dbName}`, {
-      useUnifiedTopology: true,
-      useNewUrlParser: true,
-    })
+  async localConnect(dbName: string): Promise<void> {
+    await mongoose.connect(`mongodb://localhost:27017/${dbName}`)
   }
 
-  async connectToMongoDb(dbName: string) {
+  async connectToMongoDb(dbName: string): Promise<void> {
     this.remoteConnect(dbName)
     //this.localConnect(dbName)
   }
 
-  async importDb(from: string, to: string) {
+  async importDb(from: string, to: string): Promise<void> {
     await this.remoteConnect(from)
-    let data = await User.find({})
+    let data: any = await User.find({})
     await mongoose.connection.close()
     await this.localConnect(to)
     data = data.map((user: UserObj) => {

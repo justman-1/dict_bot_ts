@@ -1,8 +1,9 @@
 import mongo from "./mongo-service"
-import TelegramBot, {Message, CallbackQuery} from "node-telegram-bot-api"
+import TelegramBot, {Message} from "node-telegram-bot-api"
 const {
   buttons,
   start_text,
+  common_error,
   help_text,
   del_text,
   is_word_text,
@@ -14,16 +15,21 @@ const {
   buttonsWithoutDict,
   buttonsWithoutDictFunc,
   enterEngWord,
+  test_text,
+  enterTranslate, 
+  testWord
 } = require("../configs/options")
 import Cache from "./cache-service"
 import Dictionary from "./dictionary-service"
+import { WordObj } from "../types"
 
 class Bot {
     bot: TelegramBot
-    addWord: any
-    addTranslate: any
-    deleteWord: any
-    changeTranslate: any
+    addWord: (msg: any) => any
+    addTranslate: (msg: any) => any
+    deleteWord: (msg: any) => any
+    changeTranslate: (msg: any) => any
+    testWordAndAnswer: (id: number, word: string | null) => Promise<void>
   constructor(bot: TelegramBot) {
     this.bot = bot
     this.addWord = this.#addWord.bind(this)
@@ -31,6 +37,7 @@ class Bot {
     this.deleteWord = this.#deleteWord.bind(this)
     this.isReg = this.isReg.bind(this)
     this.changeTranslate = this.#changeTranslate.bind(this)
+    this.testWordAndAnswer = this.#testWordAndAnswer.bind(this)
   }
 
   async start(msg: Message, id: number = msg.chat.id) {
@@ -58,6 +65,12 @@ class Bot {
   async del(msg: Message, id: number = msg.chat.id) {
     Cache.setUserState(id, "del")
     this.bot.sendMessage(id, del_text)
+  }
+
+  async test(msg: Message, id: number = msg.chat.id) {
+    Cache.setUserState(id, "test")
+    this.bot.sendMessage(id, test_text)
+    this.#testWordAndAnswer(id, null)
   }
 
   async isReg(id: number) {
@@ -116,7 +129,7 @@ class Bot {
       return this.bot.sendMessage(id, is_word_text, buttonsIsWord)
     }
     Cache.setUserState(id, "add2")
-    this.bot.sendMessage(id, "Введите перевод")
+    this.bot.sendMessage(id, enterTranslate)
   }
 
   async #addTranslate(msg: any, word: string = msg.text, id: number = msg.chat.id) {
@@ -145,6 +158,23 @@ class Bot {
       return this.bot.sendMessage(id, success_delete, buttons)
     }
     return this.bot.sendMessage(id, unsuccess_delete, buttons)
+  }
+
+  async #testWordAndAnswer(id: number, word: string | null): Promise<void> {
+    if (!word) {
+      const wordPairObj: WordObj | undefined | -1 =
+        await Dictionary.returnTestWord(id)
+      if (wordPairObj != undefined && wordPairObj != -1) {
+        this.bot.sendMessage(id, testWord(wordPairObj.words[0]))
+      }
+      else {
+        this.bot.sendMessage(id, common_error)
+      }
+    }
+    else {
+      //test word(create new separate func)
+      //send new word for test
+    }
   }
 }
 
