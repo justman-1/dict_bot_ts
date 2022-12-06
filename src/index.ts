@@ -32,6 +32,10 @@ bot.on("message", async (msg: any) => {
       case "/del":
         Controllers.del(msg)
         break
+      
+      case "/test":
+        Controllers.test(msg)
+        break
 
       default:
         Controllers.default(msg)

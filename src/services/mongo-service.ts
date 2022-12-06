@@ -1,17 +1,16 @@
-import { DictObj, WordObj } from "../types"
+import { DictObj, WordObj } from '../types'
 
-import User from "../configs/mongo"
+import User from '../configs/mongo'
 
 class Mongo {
-    User: any
+  User: any
   constructor() {
     this.User = User
   }
 
-  async isUserRegistered(id: number): Promise<boolean>{
-    const result: { id: string } | null
-      = await User.findOne({ id: id }, ["id"])
-    return (result) ? true : false
+  async isUserRegistered(id: number): Promise<boolean> {
+    const result: { id: string } | null = await User.findOne({ id: id }, ['id'])
+    return result ? true : false
   }
 
   async registerUser(id: number): Promise<void> {
@@ -23,8 +22,8 @@ class Mongo {
   }
 
   async getDict(id: number): Promise<DictObj | null> {
-    const user = await User.findOne({ id: id }, ["dict"])
-    return (user) ? user.dict : null
+    const user = await User.findOne({ id: id }, ['dict'])
+    return user ? user.dict : null
   }
 }
 

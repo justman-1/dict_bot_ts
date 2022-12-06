@@ -1,5 +1,5 @@
-import mongo from "./mongo-service"
-import TelegramBot, {Message} from "node-telegram-bot-api"
+import mongo from './mongo-service'
+import TelegramBot, { Message } from 'node-telegram-bot-api'
 const {
   buttons,
   start_text,
@@ -16,20 +16,24 @@ const {
   buttonsWithoutDictFunc,
   enterEngWord,
   test_text,
-  enterTranslate, 
-  testWord
-} = require("../configs/options")
-import Cache from "./cache-service"
-import Dictionary from "./dictionary-service"
-import { WordObj } from "../types"
+  enterTranslate,
+  testWord,
+  test_positive_reaction,
+  test_negative_reaction,
+  test_end
+} = require('../configs/options')
+import Cache from './cache-service'
+import Dictionary from './dictionary-service'
+import Forming from './forming-service'
+import { DictObj, WordObj } from '../types'
 
 class Bot {
-    bot: TelegramBot
-    addWord: (msg: any) => any
-    addTranslate: (msg: any) => any
-    deleteWord: (msg: any) => any
-    changeTranslate: (msg: any) => any
-    testWordAndAnswer: (id: number, word: string | null) => Promise<void>
+  bot: TelegramBot
+  addWord: (msg: any) => any
+  addTranslate: (msg: any) => any
+  deleteWord: (msg: any) => any
+  changeTranslate: (msg: any) => any
+  testWordAndAnswer: (id: number, word: string | null) => Promise<void>
   constructor(bot: TelegramBot) {
     this.bot = bot
     this.addWord = this.#addWord.bind(this)
@@ -53,24 +57,25 @@ class Bot {
   }
 
   async add(msg: Message, id: number = msg.chat.id) {
-    Cache.setUserState(id, "add1")
+    Cache.setUserState(id, 'add1')
     this.bot.sendMessage(id, enterEngWord)
   }
 
   async change(msg: Message, id: number = msg.chat.id) {
-    Cache.setUserState(id, "change")
-    this.bot.sendMessage(id, "Введите новый перевод")
+    Cache.setUserState(id, 'change')
+    this.bot.sendMessage(id, 'Введите новый перевод')
   }
 
   async del(msg: Message, id: number = msg.chat.id) {
-    Cache.setUserState(id, "del")
+    Cache.setUserState(id, 'del')
     this.bot.sendMessage(id, del_text)
   }
 
   async test(msg: Message, id: number = msg.chat.id) {
-    Cache.setUserState(id, "test")
-    this.bot.sendMessage(id, test_text)
-    this.#testWordAndAnswer(id, null)
+    Cache.setUserState(id, 'test')
+    setTimeout(() => {
+      this.#testWordAndAnswer(id, null)
+    }, 200)
   }
 
   async isReg(id: number) {
@@ -88,7 +93,11 @@ class Bot {
     this.bot.sendMessage(id, resultString, buttonsWithoutDictFunc(type))
   }
 
-  async showFullDictionary(msg: Message, type: string, id: number = msg.chat.id) {
+  async showFullDictionary(
+    msg: Message,
+    type: string,
+    id: number = msg.chat.id
+  ) {
     await this.isReg(id)
     const resultString: string = await Dictionary.showFull(id, type)
     this.bot.sendMessage(id, resultString, buttonsWithoutDict)
@@ -97,21 +106,24 @@ class Bot {
   async default(msg: any, id: number = msg.from.id, text: string = msg.text) {
     const state: string = Cache.getStateOfUser(id)
     switch (state) {
-      case "add1":
+      case 'add1':
         this.addWord(msg)
         break
 
-      case "add2":
+      case 'add2':
         this.addTranslate(msg)
         break
 
-      case "change":
+      case 'change':
         this.changeTranslate(msg)
         break
 
-      case "del":
+      case 'del':
         this.deleteWord(msg)
         break
+
+      case 'test':
+        this.testWordAndAnswer(msg.chat.id, msg.text)
     }
   }
 
@@ -128,11 +140,15 @@ class Bot {
       Cache.setUserState(id, null)
       return this.bot.sendMessage(id, is_word_text, buttonsIsWord)
     }
-    Cache.setUserState(id, "add2")
+    Cache.setUserState(id, 'add2')
     this.bot.sendMessage(id, enterTranslate)
   }
 
-  async #addTranslate(msg: any, word: string = msg.text, id: number = msg.chat.id) {
+  async #addTranslate(
+    msg: any,
+    word: string = msg.text,
+    id: number = msg.chat.id
+  ) {
     await this.isReg(id)
     Cache.saveWord2(id, word)
     Cache.setUserState(id, null)
@@ -140,20 +156,29 @@ class Bot {
     this.bot.sendMessage(id, success_save, buttonsAfterAdd)
   }
 
-  async #changeTranslate(msg: any, word: string = msg.text, id: number = msg.chat.id) {
+  async #changeTranslate(
+    msg: any,
+    word: string = msg.text,
+    id: number = msg.chat.id
+  ) {
     await this.isReg(id)
     Cache.saveWord2(id, word)
     const result: boolean = await Dictionary.changeTranslate(id)
     if (result) {
       Cache.setUserState(id, null)
-      return this.bot.sendMessage(id, "Слово изменено!", buttonsAfterAdd)
+      return this.bot.sendMessage(id, 'Слово изменено!', buttonsAfterAdd)
     }
-    this.bot.sendMessage(id, "Слово не изменено.", buttonsAfterAdd)
+    this.bot.sendMessage(id, 'Слово не изменено.', buttonsAfterAdd)
   }
 
-  async #deleteWord(msg: any, text: string = msg.text, id: number = msg.chat.id) {
+  async #deleteWord(
+    msg: any,
+    text: string = msg.text,
+    id: number = msg.chat.id
+  ) {
     await this.isReg(id)
     const deletedWordsNum: number = await Dictionary.deleteWord(id, text)
+    Cache.setUserState(id, null)
     if (deletedWordsNum > 0) {
       return this.bot.sendMessage(id, success_delete, buttons)
     }
@@ -161,19 +186,57 @@ class Bot {
   }
 
   async #testWordAndAnswer(id: number, word: string | null): Promise<void> {
+    var wordPairForCompare: WordObj | undefined | -1 =
+      await Dictionary.returnTestWord(id)
+    console.log('wordPair: ')
+    console.log(wordPairForCompare)
     if (!word) {
-      const wordPairObj: WordObj | undefined | -1 =
-        await Dictionary.returnTestWord(id)
-      if (wordPairObj != undefined && wordPairObj != -1) {
-        this.bot.sendMessage(id, testWord(wordPairObj.words[0]))
+      if (wordPairForCompare != undefined && wordPairForCompare != -1) {
+        this.bot.sendMessage(id, testWord(wordPairForCompare.words[0]))
+      } else {
+        Dictionary.prepareTest(id)
+        wordPairForCompare = await Dictionary.returnTestWord(id)
+        if (wordPairForCompare && wordPairForCompare != -1) {
+          this.bot.sendMessage(id, test_text)
+          setTimeout(() => {
+            if (wordPairForCompare && wordPairForCompare != -1) {
+              this.bot.sendMessage(id, testWord(wordPairForCompare.words[0]))
+            }
+          }, 100)
+        } else {
+          Cache.setUserState(id, null)
+          this.bot.sendMessage(id, 'Все слова проверены или ваш словарь пуст.')
+        }
       }
-      else {
-        this.bot.sendMessage(id, common_error)
-      }
-    }
-    else {
-      //test word(create new separate func)
-      //send new word for test
+    } else if (wordPairForCompare && wordPairForCompare != -1) {
+      const testWordResult = await Dictionary.testWord(
+        id,
+        word,
+        wordPairForCompare
+      )
+      const moreIndexState: boolean = Cache.setMoreTestIndex(id)
+      wordPairForCompare = await Dictionary.returnTestWord(id)
+      this.bot.sendMessage(
+        id,
+        testWordResult ? test_positive_reaction : test_negative_reaction
+      )
+      setTimeout(() => {
+        if (wordPairForCompare && wordPairForCompare != -1) {
+          this.bot.sendMessage(id, testWord(wordPairForCompare.words[0]))
+        }
+        setTimeout(() => {
+          if (!moreIndexState) {
+            Cache.setUserState(id, null)
+            this.bot.sendMessage(id, test_end)
+          }
+        }, 100)
+      }, 100)
+    } else if (wordPairForCompare == -1) {
+      this.bot.sendMessage(id, test_end)
+      Cache.setUserState(id, null)
+      Cache.delTest(id)
+    } else {
+      this.bot.sendMessage(id, 'вернуло undefined')
     }
   }
 }
