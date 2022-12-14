@@ -78,14 +78,24 @@ class Forming {
         : notChecked.length < 5
         ? notChecked.length
         : 10
+    console.log(numOfNullTested)
+    let testedBeforeIndex: number = 0 //for separatly display half-checked words
+    let addedOnStart: string[][] = []
     var testWordsIndexes: number[] = notChecked
       .sort((a, b) => {
-        if (a.tested == 0 && numOfNullTested > 0) {
-          //at start 0
-          numOfNullTested -= 1
-          return -1
-        } else if (numOfNullTested > 0) {
-          return 1
+        if (numOfNullTested > 0) {
+          if (a.tested == 0) {
+            //at start 0
+            const state = addedOnStart.find((e) => e == a.words)
+            if (!state) {
+              numOfNullTested -= 1
+              addedOnStart.push(a.words)
+            }
+            return -1
+          } else {
+            //half-checked words
+            return 1
+          }
         } else {
           return b.tested - a.tested
         }

@@ -19,13 +19,15 @@ const {
   enterTranslate,
   testWord,
   test_positive_reaction,
-  test_negative_reaction,
+  testNegativeReaction,
+  testResults,
   test_end
 } = require('../configs/options')
 import Cache from './cache-service'
 import Dictionary from './dictionary-service'
 import Forming from './forming-service'
-import { DictObj, WordObj } from '../types'
+import { DictObj, TestOptions, WordObj } from '../types'
+import Test from './test-service'
 
 class Bot {
   bot: TelegramBot
@@ -73,9 +75,14 @@ class Bot {
 
   async test(msg: Message, id: number = msg.chat.id) {
     Cache.setUserState(id, 'test')
+    this.bot.sendMessage(id, test_text)
     setTimeout(() => {
       this.#testWordAndAnswer(id, null)
-    }, 200)
+    }, 50)
+  }
+  async stop_test(msg: Message, id: number = msg.chat.id) {
+    let resultText = await Test.stopTest(id)
+    this.bot.sendMessage(id, resultText)
   }
 
   async isReg(id: number) {
@@ -186,57 +193,11 @@ class Bot {
   }
 
   async #testWordAndAnswer(id: number, word: string | null): Promise<void> {
-    var wordPairForCompare: WordObj | undefined | -1 =
-      await Dictionary.returnTestWord(id)
-    console.log('wordPair: ')
-    console.log(wordPairForCompare)
-    if (!word) {
-      if (wordPairForCompare != undefined && wordPairForCompare != -1) {
-        this.bot.sendMessage(id, testWord(wordPairForCompare.words[0]))
-      } else {
-        Dictionary.prepareTest(id)
-        wordPairForCompare = await Dictionary.returnTestWord(id)
-        if (wordPairForCompare && wordPairForCompare != -1) {
-          this.bot.sendMessage(id, test_text)
-          setTimeout(() => {
-            if (wordPairForCompare && wordPairForCompare != -1) {
-              this.bot.sendMessage(id, testWord(wordPairForCompare.words[0]))
-            }
-          }, 100)
-        } else {
-          Cache.setUserState(id, null)
-          this.bot.sendMessage(id, 'Все слова проверены или ваш словарь пуст.')
-        }
+    const result = await Test.testWordAndAnswer(id, word)
+    for (let i = 0; i < 4; i++) {
+      if (result[i]) {
+        await this.bot.sendMessage(id, result[i] || 'err')
       }
-    } else if (wordPairForCompare && wordPairForCompare != -1) {
-      const testWordResult = await Dictionary.testWord(
-        id,
-        word,
-        wordPairForCompare
-      )
-      const moreIndexState: boolean = Cache.setMoreTestIndex(id)
-      wordPairForCompare = await Dictionary.returnTestWord(id)
-      this.bot.sendMessage(
-        id,
-        testWordResult ? test_positive_reaction : test_negative_reaction
-      )
-      setTimeout(() => {
-        if (wordPairForCompare && wordPairForCompare != -1) {
-          this.bot.sendMessage(id, testWord(wordPairForCompare.words[0]))
-        }
-        setTimeout(() => {
-          if (!moreIndexState) {
-            Cache.setUserState(id, null)
-            this.bot.sendMessage(id, test_end)
-          }
-        }, 100)
-      }, 100)
-    } else if (wordPairForCompare == -1) {
-      this.bot.sendMessage(id, test_end)
-      Cache.setUserState(id, null)
-      Cache.delTest(id)
-    } else {
-      this.bot.sendMessage(id, 'вернуло undefined')
     }
   }
 }

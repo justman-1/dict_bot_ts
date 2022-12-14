@@ -56,6 +56,10 @@ class Controllers {
     Bot.test(msg)
   }
 
+  stoptest(msg: Message) {
+    Bot.stop_test(msg)
+  }
+
   error(err: any) {
     Bot.errorHandle(err)
   }

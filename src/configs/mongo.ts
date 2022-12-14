@@ -1,5 +1,6 @@
-import { UserObj, WordObj } from "../types/index"
-import mongoose, { Schema, Model, Types } from "mongoose"
+import { UserObj, WordObj } from '../types/index'
+import mongoose, { Schema, Model, Types } from 'mongoose'
+const { DB_HOST } = process.env
 
 let mongoPath = (dbName: string) => {
   return `mongodb+srv://user1:user@example.7j3yd.mongodb.net/${dbName}?retryWrites=true&w=majority`
@@ -8,24 +9,23 @@ let mongoPath = (dbName: string) => {
 interface User1 {
   _id: Types.ObjectId
   id: string
-  dict: [
-    Types.DocumentArray<WordObj>
-  ];
+  dict: [Types.DocumentArray<WordObj>]
 }
 
 const userScheme = new Schema({
-  id: {type: Number, required: true},
+  id: { type: Number, required: true },
   dict: {
-    type:
-      [{
+    type: [
+      {
         words: { type: [String, String], required: true },
         tested: { type: Number, required: true }
-      }],
+      }
+    ],
     required: true
-  },
+  }
 })
 
-const User = mongoose.model("User", userScheme)
+const User = mongoose.model('User', userScheme)
 
 class Connect {
   constructor() {
@@ -34,18 +34,16 @@ class Connect {
   }
 
   async remoteConnect(dbName: string): Promise<void> {
-    await mongoose
-      .connect(mongoPath(dbName))
-      .then((MongoClient: any) => {
-        try {
-          console.log("Connected to mongoDB!")
-        } finally {
-        }
-      })
+    await mongoose.connect(mongoPath(dbName)).then((MongoClient: any) => {
+      try {
+        console.log('Connected to mongoDB!')
+      } finally {
+      }
+    })
   }
 
   async localConnect(dbName: string): Promise<void> {
-    await mongoose.connect(`mongodb://localhost:27017/${dbName}`)
+    await mongoose.connect(`mongodb://${DB_HOST}:27017/${dbName}`)
   }
 
   async connectToMongoDb(dbName: string): Promise<void> {
@@ -61,18 +59,18 @@ class Connect {
     data = data.map((user: UserObj) => {
       const user2 = {
         id: user.id,
-        dict: user.dict,
+        dict: user.dict
       }
       return user2
     })
     console.log(data)
     User.create(data)
-    console.log("ok")
+    console.log('ok')
   }
 }
 
 const connect = new Connect()
-//connect.remoteConnect("dictionary_bot")
-connect.localConnect("DICTINARY_BOT_TS")
+//connect.remoteConnect('dictionary_bot_ts')
+connect.localConnect('DICTINARY_BOT_TS')
 
 export default User

@@ -2,6 +2,8 @@ module.exports = {
   commandsObj: [
     { command: '/help', description: 'Просмотреть команды' },
     { command: '/dict', description: 'Просмотреть словарь' },
+    { command: '/test', description: 'Протестировать знание слов' },
+    { command: '/stoptest', description: 'Закончить тест' },
     { command: '/add', description: 'Добавить слово' },
     { command: '/del', description: 'Удалить слово' },
     { command: '/eng', description: 'Просмотреть только английские слова' },
@@ -15,7 +17,8 @@ module.exports = {
         [
           { text: 'Добавить слово', callback_data: 'add' },
           { text: 'Удалить слово', callback_data: 'delete' }
-        ]
+        ],
+        [{ text: 'Пройти тест', callback_data: 'test' }]
       ]
     })
   },
@@ -24,7 +27,8 @@ module.exports = {
     reply_markup: JSON.stringify({
       inline_keyboard: [
         [{ text: 'Добавить еще', callback_data: 'add' }],
-        [{ text: 'Мой словарь', callback_data: 'dict' }]
+        [{ text: 'Мой словарь', callback_data: 'dict' }],
+        [{ text: 'Пройти тест', callback_data: 'test' }]
       ]
     })
   },
@@ -45,7 +49,8 @@ module.exports = {
         [
           { text: 'Добавить слово', callback_data: 'add' },
           { text: 'Удалить слово', callback_data: 'delete' }
-        ]
+        ],
+        [{ text: 'Пройти тест', callback_data: 'test' }]
       ]
     })
   },
@@ -58,6 +63,7 @@ module.exports = {
             { text: 'Добавить слово', callback_data: 'add' },
             { text: 'Удалить слово', callback_data: 'delete' }
           ],
+          [{ text: 'Пройти тест', callback_data: 'test' }],
           [
             {
               text:
@@ -126,8 +132,8 @@ module.exports = {
   unsuccess_delete:
     'Ни одно слово не было удалено. Возможно, ваш словарь пуст или введенные вами индексы не относятся ни к одному слову.',
 
-  test_text:
-    'Вы начали проверку знаний слов из вашего словаря. Я буду отправлять вам слова, а вам будет нужно будет писать переводы этих слов. До того момента, пока вы не напишете одно слово правильно дважды подряд, оно не будет помечено как проверенное(дважды правильно проверенные пары слов помечаются галочкой ✅, единожды - белым кругом ⚪️ при просмотре словаря).',
+  test_text: `Вы начали проверку знаний слов из вашего словаря. Я буду отправлять вам слова, а вам будет нужно будет писать переводы этих слов. До того момента, пока вы не напишете одно слово правильно дважды подряд, оно не будет помечено как проверенное(дважды правильно проверенные пары слов помечаются галочкой ✅, единожды - белым кругом ⚪️ при просмотре словаря).
+Чтобы закончить тест, введите команду /stoptest`,
 
   testWord(word: string): string {
     return `Переведите следующее слово:
@@ -135,9 +141,23 @@ module.exports = {
 ${word}`
   },
 
-  test_positive_reaction: 'Вы ответили правильно!✅',
+  test_positive_reaction: `Вы ответили правильно!✅`,
 
-  test_negative_reaction: 'Ваш ответ оказался неправильным.❌',
+  testNegativeReaction(correct_answer: string) {
+    return `Ваш ответ оказался неправильным.❌
+Правильный ответ: ${correct_answer}`
+  },
+
+  testResults(answered: number, correct: number, fullCorrect: number) {
+    return `Ваш тест окончен!
+    Результаты теста:
+Проверено слов: ${answered}
+Отвечено правильно: ${correct}
+Отвечено неправильно: ${answered - correct}
+Проверены дважды правильно✅: ${fullCorrect}`
+  },
+
+  test_all_checked: 'Все слова проверены или ваш словарь пуст.',
 
   test_end: 'Ваш тест окончен!'
 }

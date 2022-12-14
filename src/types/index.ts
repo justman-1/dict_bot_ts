@@ -15,6 +15,7 @@ export interface WordsGetObj {
 export interface TestOptions {
   index: number //i
   wordsIndexes: number[] //array[i] = index of word pair,
+  answered: number
   answeredCorrectly: number
   answeredWrongly: number
   becameFullCorrect: number

@@ -45,6 +45,7 @@ class CacheCl {
     const newTestOptions: TestOptions = {
       index: 0,
       wordsIndexes: wordsIndexes,
+      answered: 0,
       answeredCorrectly: 0,
       answeredWrongly: 0,
       becameFullCorrect: 0
@@ -65,7 +66,6 @@ class CacheCl {
   }
   setMoreTestIndex(chat_id: number): boolean {
     const testOptions = cacheTest.get('testOptions:' + chat_id)
-    console.log('add test index')
     if (testOptions) {
       testOptions.index += 1
       cacheTest.put('testOptions:' + chat_id, testOptions)
@@ -73,6 +73,19 @@ class CacheCl {
     return testOptions
       ? testOptions.wordsIndexes.length > testOptions.index
       : false
+  }
+  changeAnsweredStates(
+    chat_id: number,
+    answeredState: boolean,
+    fullCorrectState: boolean
+  ): void {
+    const testOptions = cacheTest.get('testOptions:' + chat_id)
+    if (testOptions) {
+      testOptions.answered += 1
+      if (answeredState) testOptions.answeredCorrectly += 1
+      else testOptions.answeredWrongly += 1
+      if (fullCorrectState) testOptions.becameFullCorrect += 1
+    }
   }
   delTest(chat_id: number): void {
     cacheTest.del('testOptions:' + chat_id)
