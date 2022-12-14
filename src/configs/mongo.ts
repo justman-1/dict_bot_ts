@@ -63,9 +63,7 @@ class Connect {
       }
       return user2
     })
-    console.log(data)
     User.create(data)
-    console.log('ok')
   }
 }
 

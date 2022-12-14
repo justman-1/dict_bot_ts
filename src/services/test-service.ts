@@ -143,7 +143,6 @@ class Test {
     let wordsCheck = wordPairCheck.words[1].split('/')
     let testSucceed: boolean = wordsCheck.find((e) => e == word) ? true : false
     if (testSucceed) {
-      console.log(wordPairCheck)
       if (wordPairCheck.index != undefined) {
         const newIndex = await this.addTestedIndex(
           id,

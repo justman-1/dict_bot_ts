@@ -96,8 +96,12 @@ class Bot {
 
   async showDictionary(msg: Message, type: string, id: number = msg.chat.id) {
     await this.isReg(id)
-    const resultString: string = await Dictionary.show(id, type)
-    this.bot.sendMessage(id, resultString, buttonsWithoutDictFunc(type))
+    const [resultString, showFullAbility] = await Dictionary.show(id, type)
+    this.bot.sendMessage(
+      id,
+      resultString,
+      showFullAbility ? buttonsWithoutDictFunc(type) : buttonsWithoutDict
+    )
   }
 
   async showFullDictionary(

@@ -16,17 +16,18 @@ class Dictionary {
     this.saveDictionary = this.#saveDictionary.bind(this)
   }
 
-  async show(id: number, type: string): Promise<string> {
-    const { words, wordsIndex }: WordsGetObj = await this.getLast30Words(id)
+  async show(id: number, type: string): Promise<[string, boolean]> {
+    const { words, wordsIndex, moreThan30 }: WordsGetObj =
+      await this.getLast30Words(id)
     if (words && words.length != 0) {
       let wordsStr: string = Forming.formWordsShowToString(
         words,
         wordsIndex,
         type
       )
-      return wordsStr
+      return [wordsStr, moreThan30]
     } else {
-      return 'Ваш словарь пуст'
+      return ['Ваш словарь пуст', false]
     }
   }
 
@@ -108,11 +109,13 @@ class Dictionary {
 
   async #getLast30Words(id: number): Promise<WordsGetObj> {
     let words: DictObj = await this.getDictionaryObj(id)
-    const index: number = words.length > 30 ? words.length - 30 : 0
+    const moreThan30 = words.length > 30
+    const index: number = moreThan30 ? words.length - 30 : 0
     words = words.slice(index)
     return {
       words: words ? words : null,
-      wordsIndex: index
+      wordsIndex: index,
+      moreThan30: moreThan30
     }
   }
 

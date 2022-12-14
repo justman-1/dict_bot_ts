@@ -11,6 +11,7 @@ export interface UserObj {
 export interface WordsGetObj {
   words: DictObj | null
   wordsIndex: number
+  moreThan30: boolean
 }
 export interface TestOptions {
   index: number //i

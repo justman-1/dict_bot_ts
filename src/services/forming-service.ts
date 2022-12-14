@@ -68,8 +68,6 @@ class Forming {
         return e
       })
       .filter((e) => e.tested < 2)
-    console.log('not checked: ')
-    console.log(notChecked)
     let numOfNullTested: number = //we check pairs with 0 index
       notChecked.length >= 25 && notChecked.length <= 50
         ? Math.floor(notChecked.length * 0.2)
@@ -78,7 +76,6 @@ class Forming {
         : notChecked.length < 5
         ? notChecked.length
         : 10
-    console.log(numOfNullTested)
     let testedBeforeIndex: number = 0 //for separatly display half-checked words
     let addedOnStart: string[][] = []
     var testWordsIndexes: number[] = notChecked
