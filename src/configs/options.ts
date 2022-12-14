@@ -33,6 +33,15 @@ module.exports = {
     })
   },
 
+  buttonsAfterTest: {
+    reply_markup: JSON.stringify({
+      inline_keyboard: [
+        [{ text: 'Мой словарь', callback_data: 'dict' }],
+        [{ text: 'Пройти тест еще раз', callback_data: 'test' }]
+      ]
+    })
+  },
+
   buttonsIsWord: {
     reply_markup: JSON.stringify({
       inline_keyboard: [

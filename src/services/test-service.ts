@@ -103,7 +103,7 @@ class Test {
       Cache.delTest(id)
       return [null, null, null, results]
     } else {
-      return [null, null, null, 'end']
+      return [null, null, null, test_end]
     }
   }
 
@@ -129,7 +129,7 @@ class Test {
     let words: DictObj = await Dictionary.getDictionaryObj(id)
     const isTest: boolean = Cache.isTest(id)
     if (!isTest) {
-      await this.prepareTest(id)
+      return undefined
     }
     return this.getTestWord(id, words)
   }

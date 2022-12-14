@@ -57,7 +57,6 @@ class CacheCl {
   }
   getTestIndex(chat_id: number): number | undefined {
     const testOptions = cacheTest.get('testOptions:' + chat_id)
-    console.log(testOptions)
     let index: number | undefined = testOptions?.index
     return index != undefined ? testOptions?.wordsIndexes[index] : undefined
   }

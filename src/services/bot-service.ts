@@ -15,13 +15,8 @@ const {
   buttonsWithoutDict,
   buttonsWithoutDictFunc,
   enterEngWord,
-  test_text,
   enterTranslate,
-  testWord,
-  test_positive_reaction,
-  testNegativeReaction,
-  testResults,
-  test_end
+  buttonsAfterTest
 } = require('../configs/options')
 import Cache from './cache-service'
 import Dictionary from './dictionary-service'
@@ -75,7 +70,6 @@ class Bot {
 
   async test(msg: Message, id: number = msg.chat.id) {
     Cache.setUserState(id, 'test')
-    this.bot.sendMessage(id, test_text)
     setTimeout(() => {
       this.#testWordAndAnswer(id, null)
     }, 50)
@@ -200,7 +194,9 @@ class Bot {
     const result = await Test.testWordAndAnswer(id, word)
     for (let i = 0; i < 4; i++) {
       if (result[i]) {
-        await this.bot.sendMessage(id, result[i] || 'err')
+        if (i == 3)
+          await this.bot.sendMessage(id, result[i] || 'err', buttonsAfterTest)
+        else await this.bot.sendMessage(id, result[i] || 'err')
       }
     }
   }
