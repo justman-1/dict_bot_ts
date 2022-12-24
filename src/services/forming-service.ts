@@ -19,8 +19,11 @@ class Forming {
         : 'Переводы слов из вашего словаря'
     }${wordsIndex != 0 ? '(последние 30 слов)' : ''}: \n`
     dict.forEach((part, index) => {
-      const state: string =
-        part.tested == 0 ? '' : part.tested == 1 ? ' ⚪' : ' ✅'
+      const state_eng: string =
+        part.tested_eng == 0 ? '' : part.tested_eng == 1 ? ' ⚪' : ' ✅'
+      const state_rus: string =
+        part.tested_rus == 0 ? '' : part.tested_rus == 1 ? ' ⚪' : ' ✅'
+      const state = state_eng + state_rus
       wordsStr +=
         +index +
         +1 +
@@ -61,13 +64,22 @@ class Forming {
     return result
   }
 
-  formTestWordsIndexesArr(words: DictObj): number[] {
-    const notChecked: DictObj = words
-      .map((e, i) => {
-        e.index = i
-        return e
-      })
-      .filter((e) => e.tested < 2)
+  formTestWordsIndexesArr(words: DictObj, langType: 'rus' | 'eng'): number[] {
+    let notChecked: DictObj = words.map((e, i) => {
+      e.index = i
+      return e
+    })
+    let checkedWith1: DictObj
+    let checkedWith0: DictObj
+    if (langType == 'eng') {
+      checkedWith1 = notChecked.filter((e) => e.tested_eng == 1)
+      checkedWith0 = notChecked.filter((e) => e.tested_eng == 0)
+      notChecked = notChecked.filter((e) => e.tested_eng < 2)
+    } else {
+      checkedWith1 = notChecked.filter((e) => e.tested_rus == 1)
+      checkedWith0 = notChecked.filter((e) => e.tested_rus == 0)
+      notChecked = notChecked.filter((e) => e.tested_rus < 2)
+    }
     let numOfNullTested: number = //we check pairs with 0 index
       notChecked.length >= 25 && notChecked.length <= 50
         ? Math.floor(notChecked.length * 0.2)
@@ -76,31 +88,19 @@ class Forming {
         : notChecked.length < 5
         ? notChecked.length
         : 10
-    let testedBeforeIndex: number = 0 //for separatly display half-checked words
-    let addedOnStart: string[][] = []
-    var testWordsIndexes: number[] = notChecked
-      .sort((a, b) => {
-        if (numOfNullTested > 0) {
-          if (a.tested == 0) {
-            //at start 0
-            const state = addedOnStart.find((e) => e == a.words)
-            if (!state) {
-              numOfNullTested -= 1
-              addedOnStart.push(a.words)
-            }
-            return -1
-          } else {
-            //half-checked words
-            return 1
-          }
-        } else {
-          return b.tested - a.tested
-        }
-      })
-      .map((e) => {
-        return e?.index || 0
-      })
-    return testWordsIndexes
+    let result = checkedWith0
+    result = result.concat(checkedWith1) //2 step
+    if (numOfNullTested < checkedWith0.length) {
+      result.unshift.apply(checkedWith0.slice(0, numOfNullTested)) //1 step
+      result.push.apply(checkedWith0.slice(numOfNullTested)) //3step
+    } else {
+      result.unshift.apply(checkedWith0)
+    }
+    const resultIndexes = result.map((e) => {
+      return e?.index || 0
+    })
+    console.log(resultIndexes)
+    return resultIndexes
   }
 
   #formDeleteRangesToArray(indexesStr: string): number[] {

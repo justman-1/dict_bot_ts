@@ -1,9 +1,10 @@
-import { DictObj, TestOptions } from '../types'
+import { DictObj, ExampleOptions, TestOptions } from '../types'
 import { Cache, CacheClass } from 'memory-cache'
 var cacheDict: CacheClass<string, DictObj> = new Cache()
 var cacheStr: CacheClass<string, string | null> = new Cache()
 var cacheBool: CacheClass<string, boolean> = new Cache()
 var cacheTest: CacheClass<string, TestOptions> = new Cache()
+var cacheExample: CacheClass<string, ExampleOptions> = new Cache()
 
 class CacheCl {
   setUserState(chat_id: number, state: string | null): void {
@@ -41,9 +42,14 @@ class CacheCl {
     return cacheBool.get('registered:' + chat_id) ? true : false
   }
 
-  setTestInfo(chat_id: number, wordsIndexes: number[]): void {
+  setTestInfo(
+    chat_id: number,
+    wordsIndexes: number[],
+    type: 'rus' | 'eng'
+  ): void {
     const newTestOptions: TestOptions = {
       index: 0,
+      type: type,
       wordsIndexes: wordsIndexes,
       answered: 0,
       answeredCorrectly: 0,
@@ -88,6 +94,18 @@ class CacheCl {
   }
   delTest(chat_id: number): void {
     cacheTest.del('testOptions:' + chat_id)
+  }
+
+  setExampleInfo(chat_id: number, type: 'rus' | 'eng', index: number): void {
+    const exampleOptions: ExampleOptions = {
+      type: type,
+      index: index
+    }
+    cacheExample.put('exampleOptions:' + chat_id, exampleOptions)
+  }
+
+  getExampleInfo(chat_id: number): ExampleOptions | null {
+    return cacheExample.get('exampleOptions:' + chat_id)
   }
 }
 

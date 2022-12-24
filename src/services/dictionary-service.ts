@@ -55,7 +55,10 @@ class Dictionary {
     if (addWords) {
       const newWordsPair: WordObj = {
         words: addWords,
-        tested: 0
+        tested_eng: 0,
+        tested_rus: 0,
+        example_eng: '',
+        example_rus: ''
       }
       dict.push(newWordsPair)
       this.saveDictionary(id, dict)

@@ -18,7 +18,10 @@ const userScheme = new Schema({
     type: [
       {
         words: { type: [String, String], required: true },
-        tested: { type: Number, required: true }
+        tested_eng: { type: Number, required: true, default: 0 },
+        tested_rus: { type: Number, required: true, default: 0 },
+        example_eng: { type: String, required: true, default: '' },
+        example_rus: { type: String, required: true, default: '' }
       }
     ],
     required: true

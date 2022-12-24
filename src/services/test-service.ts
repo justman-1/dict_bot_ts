@@ -18,14 +18,16 @@ class Test {
   testWord: (
     id: number,
     word: string,
-    wordPairCheck: WordObj
+    wordPairCheck: WordObj,
+    type: 'rus' | 'eng'
   ) => Promise<[boolean, string | null]>
-  prepareTest: (id: number) => Promise<void>
+  prepareTest: (id: number, type: 'rus' | 'eng') => Promise<void>
   getTestWord: (id: number, words: DictObj) => WordObj | -1 | undefined
   addTestedIndex: (
     id: number,
     wordIndex: number,
-    addOrNot: boolean
+    addOrNot: boolean,
+    type: 'rus' | 'eng'
   ) => Promise<number>
   constructor() {
     this.getTestResults = this.#getTestResults.bind(this)
@@ -44,18 +46,31 @@ class Test {
 
   async testWordAndAnswer(
     id: number,
-    word: string | null
+    word: string | null,
+    type: 'eng' | 'rus'
   ): Promise<[null | string, null | string, null | string, string | false]> {
     var wordPairForCompare: WordObj | undefined | -1 =
       await this.returnTestWord(id)
     if (!word) {
       if (wordPairForCompare != undefined && wordPairForCompare != -1) {
-        return [null, null, testWord(wordPairForCompare.words[0]), false]
+        const word2 = wordPairForCompare.words[type == 'eng' ? 0 : 1]
+        const example =
+          type == 'eng'
+            ? wordPairForCompare.example_eng
+            : wordPairForCompare.example_rus
+        console.log(wordPairForCompare)
+        return [null, null, testWord(word2, example), false]
       } else {
-        this.prepareTest(id)
+        this.prepareTest(id, type)
         wordPairForCompare = await this.returnTestWord(id)
         if (wordPairForCompare && wordPairForCompare != -1) {
-          return [test_text, null, testWord(wordPairForCompare.words[0]), false]
+          const word2 = wordPairForCompare.words[type == 'eng' ? 0 : 1]
+          const example =
+            type == 'eng'
+              ? wordPairForCompare.example_eng
+              : wordPairForCompare.example_rus
+          console.log(wordPairForCompare)
+          return [test_text, null, testWord(word2, example), false]
         } else {
           Cache.setUserState(id, null)
           return [null, null, null, test_all_checked]
@@ -65,7 +80,8 @@ class Test {
       const [testWordResult, correctAnswer] = await this.testWord(
         id,
         word,
-        wordPairForCompare
+        wordPairForCompare,
+        type
       )
       const moreIndexState: boolean = Cache.setMoreTestIndex(id)
       let results: string | null = null
@@ -77,12 +93,18 @@ class Test {
       }
       wordPairForCompare = await this.returnTestWord(id)
       if (wordPairForCompare && wordPairForCompare != -1) {
+        const word2 = wordPairForCompare.words[type == 'eng' ? 0 : 1]
+        const example =
+          type == 'eng'
+            ? wordPairForCompare.example_eng
+            : wordPairForCompare.example_rus
+        console.log(wordPairForCompare)
         return [
           null,
           testWordResult
             ? test_positive_reaction
             : testNegativeReaction(correctAnswer),
-          testWord(wordPairForCompare.words[0]),
+          testWord(word2, example),
           false
         ]
       } else {
@@ -137,17 +159,19 @@ class Test {
   async #testWord(
     id: number,
     word: string,
-    wordPairCheck: WordObj
+    wordPairCheck: WordObj,
+    type: 'rus' | 'eng'
   ): Promise<[boolean, string | null]> {
     word = word.toLowerCase()
-    let wordsCheck = wordPairCheck.words[1].split('/')
+    let wordsCheck = wordPairCheck.words[type == 'eng' ? 1 : 0].split('/')
     let testSucceed: boolean = wordsCheck.find((e) => e == word) ? true : false
     if (testSucceed) {
       if (wordPairCheck.index != undefined) {
         const newIndex = await this.addTestedIndex(
           id,
           wordPairCheck.index,
-          true
+          true,
+          type
         )
         Cache.changeAnsweredStates(id, testSucceed, newIndex == 2)
       }
@@ -157,18 +181,19 @@ class Test {
         const newIndex = await this.addTestedIndex(
           id,
           wordPairCheck.index,
-          false
+          false,
+          type
         )
         Cache.changeAnsweredStates(id, testSucceed, newIndex == 2)
       }
-      return [false, wordPairCheck.words[1]]
+      return [false, wordPairCheck.words[type == 'eng' ? 1 : 0]]
     }
   }
 
-  async #prepareTest(id: number): Promise<void> {
+  async #prepareTest(id: number, type: 'rus' | 'eng'): Promise<void> {
     let words: DictObj = await Dictionary.getDictionaryObj(id)
-    var testWordsIndexes = Forming.formTestWordsIndexesArr(words)
-    Cache.setTestInfo(id, testWordsIndexes)
+    var testWordsIndexes = Forming.formTestWordsIndexesArr(words, type)
+    Cache.setTestInfo(id, testWordsIndexes, type)
   }
 
   #getTestWord(id: number, words: DictObj): WordObj | -1 | undefined {
@@ -182,12 +207,22 @@ class Test {
   async #addTestedIndex(
     id: number,
     wordIndex: number,
-    addOrNot: boolean
+    addOrNot: boolean,
+    type: 'rus' | 'eng'
   ): Promise<number> {
     let words: DictObj = await Dictionary.getDictionaryObj(id)
-    words[wordIndex].tested = addOrNot ? words[wordIndex].tested + 1 : 0
+    if (type == 'eng')
+      words[wordIndex].tested_eng = addOrNot
+        ? words[wordIndex].tested_eng + 1
+        : 0
+    else
+      words[wordIndex].tested_rus = addOrNot
+        ? words[wordIndex].tested_rus + 1
+        : 0
     Dictionary.saveDictionary(id, words)
-    return words[wordIndex].tested
+    return type == 'eng'
+      ? words[wordIndex].tested_eng
+      : words[wordIndex].tested_rus
   }
 }
 

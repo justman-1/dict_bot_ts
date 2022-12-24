@@ -2,7 +2,8 @@ module.exports = {
   commandsObj: [
     { command: '/help', description: 'Просмотреть команды' },
     { command: '/dict', description: 'Просмотреть словарь' },
-    { command: '/test', description: 'Протестировать знание слов' },
+    { command: '/test', description: 'Протестировать знание переводов' },
+    { command: '/testrus', description: 'Протестировать знание слов' },
     { command: '/stoptest', description: 'Закончить тест' },
     { command: '/add', description: 'Добавить слово' },
     { command: '/del', description: 'Удалить слово' },
@@ -95,6 +96,14 @@ module.exports = {
     }
   },
 
+  addExampleButton: {
+    reply_markup: JSON.stringify({
+      inline_keyboard: [
+        [{ text: 'Добавить пример слова', callback_data: 'add_example' }]
+      ]
+    })
+  },
+
   start_text: `
   У вас есть свой словарь!
   Используйте следующие команды для управления ботом:
@@ -144,10 +153,11 @@ module.exports = {
   test_text: `Вы начали проверку знаний слов из вашего словаря. Я буду отправлять вам слова, а вам будет нужно будет писать переводы этих слов. До того момента, пока вы не напишете одно слово правильно дважды подряд, оно не будет помечено как проверенное(дважды правильно проверенные пары слов помечаются галочкой ✅, единожды - белым кругом ⚪️ при просмотре словаря).
 Чтобы закончить тест, введите команду /stoptest`,
 
-  testWord(word: string): string {
+  testWord(word: string, example: string): string {
     return `Переведите следующее слово:
       
-${word}`
+${word}
+${example != '' ? 'Пример: ' + example : ''}`
   },
 
   test_positive_reaction: `Вы ответили правильно!✅`,
@@ -168,5 +178,11 @@ ${word}`
 
   test_all_checked: 'Все слова проверены или ваш словарь пуст.',
 
-  test_end: 'Ваш тест окончен!'
+  test_end: 'Ваш тест окончен!',
+
+  addExampleText: (word: string) => {
+    return `Введите предложение с примером использования слова "${word}"`
+  },
+
+  example_added_text: 'Пример добавлен!'
 }

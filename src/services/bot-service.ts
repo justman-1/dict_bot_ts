@@ -3,7 +3,6 @@ import TelegramBot, { Message } from 'node-telegram-bot-api'
 const {
   buttons,
   start_text,
-  common_error,
   help_text,
   del_text,
   is_word_text,
@@ -16,13 +15,16 @@ const {
   buttonsWithoutDictFunc,
   enterEngWord,
   enterTranslate,
-  buttonsAfterTest
+  buttonsAfterTest,
+  addExampleButton,
+  example_added_text
 } = require('../configs/options')
 import Cache from './cache-service'
 import Dictionary from './dictionary-service'
 import Forming from './forming-service'
 import { DictObj, TestOptions, WordObj } from '../types'
 import Test from './test-service'
+import Example from './example-test-service'
 
 class Bot {
   bot: TelegramBot
@@ -30,7 +32,12 @@ class Bot {
   addTranslate: (msg: any) => any
   deleteWord: (msg: any) => any
   changeTranslate: (msg: any) => any
-  testWordAndAnswer: (id: number, word: string | null) => Promise<void>
+  testWordAndAnswer: (
+    id: number,
+    word: string | null,
+    type: 'rus' | 'eng'
+  ) => Promise<void>
+  addExample: (id: number, text: string) => Promise<void>
   constructor(bot: TelegramBot) {
     this.bot = bot
     this.addWord = this.#addWord.bind(this)
@@ -39,6 +46,7 @@ class Bot {
     this.isReg = this.isReg.bind(this)
     this.changeTranslate = this.#changeTranslate.bind(this)
     this.testWordAndAnswer = this.#testWordAndAnswer.bind(this)
+    this.addExample = this.#addExample.bind(this)
   }
 
   async start(msg: Message, id: number = msg.chat.id) {
@@ -70,10 +78,21 @@ class Bot {
 
   async test(msg: Message, id: number = msg.chat.id) {
     Cache.setUserState(id, 'test')
-    setTimeout(() => {
-      this.#testWordAndAnswer(id, null)
-    }, 50)
+    Cache.delTest(id)
+    this.#testWordAndAnswer(id, null, 'eng')
   }
+
+  async test_rus(msg: Message, id: number = msg.chat.id) {
+    Cache.setUserState(id, 'test_rus')
+    Cache.delTest(id)
+    this.#testWordAndAnswer(id, null, 'rus')
+  }
+
+  async add_example(msg: Message, id: number = msg.chat.id) {
+    const text = await Example.start(id)
+    await this.bot.sendMessage(id, text)
+  }
+
   async stop_test(msg: Message, id: number = msg.chat.id) {
     let resultText = await Test.stopTest(id)
     this.bot.sendMessage(id, resultText)
@@ -128,7 +147,16 @@ class Bot {
         break
 
       case 'test':
-        this.testWordAndAnswer(msg.chat.id, msg.text)
+        this.testWordAndAnswer(msg.chat.id, msg.text, 'eng')
+        break
+
+      case 'test_rus':
+        this.testWordAndAnswer(msg.chat.id, msg.text, 'rus')
+        break
+
+      case 'add_example':
+        this.#addExample(msg.chat.id, msg.text)
+        break
     }
   }
 
@@ -190,14 +218,30 @@ class Bot {
     return this.bot.sendMessage(id, unsuccess_delete, buttons)
   }
 
-  async #testWordAndAnswer(id: number, word: string | null): Promise<void> {
-    const result = await Test.testWordAndAnswer(id, word)
+  async #testWordAndAnswer(
+    id: number,
+    word: string | null,
+    type: 'rus' | 'eng'
+  ): Promise<void> {
+    const result = await Test.testWordAndAnswer(id, word, type)
     for (let i = 0; i < 4; i++) {
       if (result[i]) {
-        if (i == 3)
+        if (i == 1)
+          await this.bot.sendMessage(id, result[i] || 'err', addExampleButton)
+        else if (i == 3)
           await this.bot.sendMessage(id, result[i] || 'err', buttonsAfterTest)
         else await this.bot.sendMessage(id, result[i] || 'err')
       }
+    }
+  }
+
+  async #addExample(id: number, text: string): Promise<void> {
+    await Example.add(id, text)
+    await this.bot.sendMessage(id, example_added_text)
+    const options = await Cache.getTestOptions(id)
+    if (options) {
+      const result = await Test.testWordAndAnswer(id, null, options.type)
+      this.bot.sendMessage(id, result[2] || 'err')
     }
   }
 }

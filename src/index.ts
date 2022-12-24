@@ -37,6 +37,10 @@ bot.on('message', async (msg: any) => {
         Controllers.test(msg)
         break
 
+      case '/testrus':
+        Controllers.test_rus(msg)
+        break
+
       case '/stoptest':
         Controllers.stoptest(msg)
         break
@@ -85,6 +89,10 @@ bot.on('callback_query', async (msg: any) => {
 
     case 'test':
       Controllers.test(msg.message)
+      break
+
+    case 'add_example':
+      Controllers.add_example(msg.message)
       break
   }
 })

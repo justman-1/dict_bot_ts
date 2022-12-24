@@ -56,8 +56,16 @@ class Controllers {
     Bot.test(msg)
   }
 
+  test_rus(msg: Message) {
+    Bot.test_rus(msg)
+  }
+
   stoptest(msg: Message) {
     Bot.stop_test(msg)
+  }
+
+  add_example(msg: Message) {
+    Bot.add_example(msg)
   }
 
   error(err: any) {
