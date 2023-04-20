@@ -1,6 +1,7 @@
 import { UserObj, WordObj } from '../types/index'
 import mongoose, { Schema, Model, Types } from 'mongoose'
 const { DB_HOST } = process.env
+console.log(DB_HOST)
 
 let mongoPath = (dbName: string) => {
   return `mongodb+srv://user1:user@example.7j3yd.mongodb.net/${dbName}?retryWrites=true&w=majority`

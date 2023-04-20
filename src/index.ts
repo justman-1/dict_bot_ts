@@ -53,46 +53,47 @@ bot.on('message', async (msg: any) => {
   }
 })
 
-bot.on('callback_query', async (msg: any) => {
-  switch (msg.data) {
+bot.on('callback_query', async (query: any) => {
+  switch (query.data) {
     case 'dict':
-      Controllers.dict(msg.message)
+      await Controllers.dict(query.message)
       break
 
     case 'dictFull':
-      Controllers.dictFull(msg.message)
+      await Controllers.dictFull(query.message)
       break
 
     case 'engFull':
-      Controllers.engFull(msg.message)
+      await Controllers.engFull(query.message)
       break
 
     case 'rusFull':
-      Controllers.rusFull(msg.message)
+      await Controllers.rusFull(query.message)
       break
 
     case 'add':
-      Controllers.add(msg.message)
+      await Controllers.add(query.message)
       break
 
     case 'change':
-      Controllers.change(msg.message)
+      await Controllers.change(query.message)
       break
 
     case 'cancelWord':
-      Controllers.help(msg.message)
+      await Controllers.help(query.message)
       break
 
     case 'delete':
-      Controllers.del(msg.message)
+      await Controllers.del(query.message)
       break
 
     case 'test':
-      Controllers.test(msg.message)
+      await Controllers.test(query.message)
       break
 
     case 'add_example':
-      Controllers.add_example(msg.message)
+      await Controllers.add_example(query.message)
       break
   }
+  bot.answerCallbackQuery(query.id)
 })
