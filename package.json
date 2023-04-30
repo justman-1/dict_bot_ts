@@ -29,9 +29,11 @@
     "@types/memory-cache": "^0.2.2",
     "@types/mongoose": "^5.11.97",
     "@types/node-telegram-bot-api": "^0.57.6",
+    "@types/string-similarity": "^4.0.0",
     "dotenv": "^16.0.3",
     "memory-cache": "^0.2.0",
     "mongoose": "^6.7.2",
-    "node-telegram-bot-api": "^0.60.0"
+    "node-telegram-bot-api": "^0.60.0",
+    "string-similarity": "^4.0.4"
   }
 }

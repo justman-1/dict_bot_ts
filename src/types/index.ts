@@ -4,6 +4,8 @@ export interface WordObj {
   tested_rus: number
   example_eng: string
   example_rus: string
+  checked: number
+  date: Date
   index?: number
 }
 export interface DictObj extends Array<WordObj> {}

@@ -58,7 +58,6 @@ class Test {
           type == 'eng'
             ? wordPairForCompare.example_eng
             : wordPairForCompare.example_rus
-        console.log(wordPairForCompare)
         return [null, null, testWord(word2, example), false]
       } else {
         this.prepareTest(id, type)
@@ -69,7 +68,6 @@ class Test {
             type == 'eng'
               ? wordPairForCompare.example_eng
               : wordPairForCompare.example_rus
-          console.log(wordPairForCompare)
           return [test_text, null, testWord(word2, example), false]
         } else {
           Cache.setUserState(id, null)
@@ -98,7 +96,6 @@ class Test {
           type == 'eng'
             ? wordPairForCompare.example_eng
             : wordPairForCompare.example_rus
-        console.log(wordPairForCompare)
         return [
           null,
           testWordResult
@@ -164,7 +161,11 @@ class Test {
   ): Promise<[boolean, string | null]> {
     word = word.toLowerCase()
     let wordsCheck = wordPairCheck.words[type == 'eng' ? 1 : 0].split('/')
-    let testSucceed: boolean = wordsCheck.find((e) => e == word) ? true : false
+    let testSucceed: boolean = wordsCheck.find((e) =>
+      Forming.areWordsSimilar(e, word)
+    )
+      ? true
+      : false
     if (testSucceed) {
       if (wordPairCheck.index != undefined) {
         const newIndex = await this.addTestedIndex(

@@ -58,7 +58,9 @@ class Dictionary {
         tested_eng: 0,
         tested_rus: 0,
         example_eng: '',
-        example_rus: ''
+        example_rus: '',
+        checked: 0,
+        date: new Date()
       }
       dict.push(newWordsPair)
       this.saveDictionary(id, dict)
@@ -92,6 +94,34 @@ class Dictionary {
     })
     this.saveDictionary(id, words)
     return indexes.length
+  }
+
+  async updateWordsDate(id: number): Promise<void> {
+    let words: DictObj = await this.getDictionaryObj(id)
+    const newWords = words.map((e) => {
+      if (e.tested_eng == 2 && e.checked != 4) {
+        if (e.checked == 0) {
+          e.checked = 1
+        }
+        const now = new Date()
+        const diff =
+          e.checked == 1
+            ? 86400000
+            : e.checked == 2
+            ? 7 * 86400000
+            : e.checked == 3
+            ? 14 * 86400000
+            : 0
+        if (now.getTime() - e.date.getTime() > diff) {
+          e.checked += 1
+          e.date = now
+          e.tested_eng = 0
+          e.tested_rus = 0
+        }
+      }
+      return e
+    })
+    await this.saveDictionary(id, newWords)
   }
 
   async #getDictionaryObj(id: number): Promise<DictObj> {

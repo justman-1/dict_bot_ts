@@ -1,7 +1,6 @@
 import { UserObj, WordObj } from '../types/index'
 import mongoose, { Schema, Model, Types } from 'mongoose'
 const { DB_HOST } = process.env
-console.log(DB_HOST)
 
 let mongoPath = (dbName: string) => {
   return `mongodb+srv://user1:user@example.7j3yd.mongodb.net/${dbName}?retryWrites=true&w=majority`
@@ -19,13 +18,16 @@ const userScheme = new Schema({
     type: [
       {
         words: { type: [String, String], required: true },
-        tested_eng: { type: Number, required: true, default: 0 },
-        tested_rus: { type: Number, required: true, default: 0 },
-        example_eng: { type: String, required: true, default: '' },
-        example_rus: { type: String, required: true, default: '' }
+        tested_eng: { type: Number, default: 0 },
+        tested_rus: { type: Number, default: 0 },
+        example_eng: { type: String, default: '' },
+        example_rus: { type: String, default: '' },
+        checked: { type: Number, default: 0 },
+        date: { type: Date, default: new Date() }
       }
     ],
-    required: true
+    required: true,
+    default: []
   }
 })
 
@@ -38,10 +40,12 @@ class Connect {
   }
 
   async remoteConnect(dbName: string): Promise<void> {
-    await mongoose.connect(mongoPath(dbName)).then((MongoClient: any) => {
+    await mongoose.connect(mongoPath(dbName)).then(async (MongoClient: any) => {
       try {
         console.log('Connected to mongoDB!')
-      } finally {
+      } catch (err) {
+        console.log('have not connected')
+        console.log(err)
       }
     })
   }
@@ -50,16 +54,12 @@ class Connect {
     await mongoose.connect(`mongodb://${DB_HOST}:27017/${dbName}`)
   }
 
-  async connectToMongoDb(dbName: string): Promise<void> {
-    this.remoteConnect(dbName)
-    //this.localConnect(dbName)
-  }
-
   async importDb(from: string, to: string): Promise<void> {
     await this.remoteConnect(from)
     let data: any = await User.find({})
     await mongoose.connection.close()
     await this.localConnect(to)
+    await User.deleteMany({})
     data = data.map((user: UserObj) => {
       const user2 = {
         id: user.id,
@@ -67,12 +67,36 @@ class Connect {
       }
       return user2
     })
-    User.create(data)
+    User.insertMany(data, (err) => {
+      if (!err) console.log('exported.')
+    })
+  }
+
+  async exportDb(from: string, to: string): Promise<void> {
+    console.log('recieve data...')
+    await this.localConnect(from)
+    let data: any = await User.find({})
+    console.log('recieved')
+    await mongoose.connection.close()
+    await this.remoteConnect(to)
+    await User.deleteMany({})
+    data = data.map((user: UserObj) => {
+      const user2 = {
+        id: user.id,
+        dict: user.dict
+      }
+      return user2
+    })
+    User.insertMany(data, (err) => {
+      if (!err) console.log('exported.')
+    })
   }
 }
 
 const connect = new Connect()
-//connect.remoteConnect('dictionary_bot_ts')
-connect.localConnect('DICTINARY_BOT_TS')
+//connect.exportDb('DICTINARY_BOT_TS', 'dictionary_bot_ts')
+
+connect.remoteConnect('dictionary_bot_ts')
+//connect.localConnect('DICTINARY_BOT_TS')
 
 export default User

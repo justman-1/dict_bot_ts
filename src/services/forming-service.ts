@@ -1,9 +1,14 @@
 import { DictObj } from '../types'
+import stringSimilarity from 'string-similarity'
 
 class Forming {
   formDeleteRangesToArray: any
+  shuffleArray: (array: DictObj) => DictObj
+  //lemRu: (word: string) => string
   constructor() {
     this.formDeleteRangesToArray = this.#formDeleteRangesToArray.bind(this)
+    this.shuffleArray = this.#shuffleArray.bind(this)
+    //this.lemRu = this.#lemRu.bind(this)
   }
 
   formWordsShowToString(
@@ -71,37 +76,45 @@ class Forming {
     })
     let checkedWith1: DictObj
     let checkedWith0: DictObj
-    if (langType == 'eng') {
-      checkedWith1 = notChecked.filter((e) => e.tested_eng == 1)
-      checkedWith0 = notChecked.filter((e) => e.tested_eng == 0)
-      notChecked = notChecked.filter((e) => e.tested_eng < 2)
+    const isEng = langType == 'eng'
+    checkedWith0 = this.shuffleArray(
+      notChecked.filter((e) => (isEng ? e.tested_eng : e.tested_rus) == 0)
+    )
+    checkedWith1 = this.shuffleArray(
+      notChecked.filter((e) => (isEng ? e.tested_eng : e.tested_rus) == 1)
+    )
+    let x = Math.floor(checkedWith0.length / (checkedWith1.length + 1)) //коэффициент
+    let result = this.shuffleArray(checkedWith0)
+    let i = x
+    let wordIndex = 0
+    if (x != 0) {
+      x += 1
+      while (i < result.length && wordIndex < checkedWith1.length) {
+        result.splice(i, 0, checkedWith1[wordIndex])
+        i += x
+        wordIndex += 1
+      }
     } else {
-      checkedWith1 = notChecked.filter((e) => e.tested_rus == 1)
-      checkedWith0 = notChecked.filter((e) => e.tested_rus == 0)
-      notChecked = notChecked.filter((e) => e.tested_rus < 2)
+      while (i < result.length && wordIndex < checkedWith1.length) {
+        result.splice(i, 0, checkedWith1[wordIndex])
+        i += 3
+        wordIndex += 1
+      }
+      if (wordIndex < checkedWith1.length) {
+        result = result.concat(checkedWith1.slice(wordIndex))
+      }
     }
-    let numOfNullTested: number = //we check pairs with 0 index
-      notChecked.length >= 25 && notChecked.length <= 50
-        ? Math.floor(notChecked.length * 0.2)
-        : notChecked.length <= 25 && notChecked.length >= 5
-        ? 5
-        : notChecked.length < 5
-        ? notChecked.length
-        : 10
-    let result = checkedWith0
-    result = result.concat(checkedWith1) //2 step
-    if (numOfNullTested < checkedWith0.length) {
-      result.unshift.apply(checkedWith0.slice(0, numOfNullTested)) //1 step
-      result.push.apply(checkedWith0.slice(numOfNullTested)) //3step
-    } else {
-      result.unshift.apply(checkedWith0)
-    }
-    const resultIndexes = result.map((e) => {
-      return e?.index || 0
-    })
-    console.log(resultIndexes)
-    return resultIndexes
+    return result.map((e) => e.index || 0)
   }
+
+  areWordsSimilar(word1: string, word2: string): boolean {
+    const similarity = stringSimilarity.compareTwoStrings(word1, word2)
+    return similarity >= 0.75
+  }
+
+  /**#lemRu(word: string): string {
+    return stemmer.stem(tokenizer.tokenize(word)[0])
+  }**/
 
   #formDeleteRangesToArray(indexesStr: string): number[] {
     const ranges: (number[] | undefined)[] =
@@ -139,6 +152,14 @@ class Forming {
       rangesIndexes = rangesIndexes.concat(ranges[i] || [])
     }
     return rangesIndexes
+  }
+
+  #shuffleArray(array: DictObj): DictObj {
+    for (let i = array.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1))
+      ;[array[i], array[j]] = [array[j], array[i]]
+    }
+    return array
   }
 }
 

@@ -79,10 +79,12 @@ class Bot {
   async test(msg: Message, id: number = msg.chat.id) {
     Cache.setUserState(id, 'test')
     Cache.delTest(id)
+    await Dictionary.updateWordsDate(id)
     this.#testWordAndAnswer(id, null, 'eng')
   }
 
   async test_rus(msg: Message, id: number = msg.chat.id) {
+    await Dictionary.updateWordsDate(id)
     Cache.setUserState(id, 'test_rus')
     Cache.delTest(id)
     this.#testWordAndAnswer(id, null, 'rus')
@@ -109,6 +111,7 @@ class Bot {
 
   async showDictionary(msg: Message, type: string, id: number = msg.chat.id) {
     await this.isReg(id)
+    await Dictionary.updateWordsDate(id)
     const [resultString, showFullAbility] = await Dictionary.show(id, type)
     this.bot.sendMessage(
       id,
@@ -123,6 +126,7 @@ class Bot {
     id: number = msg.chat.id
   ) {
     await this.isReg(id)
+    await Dictionary.updateWordsDate(id)
     const resultString: string = await Dictionary.showFull(id, type)
     this.bot.sendMessage(id, resultString, buttonsWithoutDict)
   }
