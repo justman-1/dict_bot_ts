@@ -55,8 +55,11 @@ class Connect {
   }
 
   async importDb(from: string, to: string): Promise<void> {
+    console.log('recieve data...')
     await this.remoteConnect(from)
     let data: any = await User.find({})
+    console.log(JSON.stringify(data))
+    console.log('recieved')
     await mongoose.connection.close()
     await this.localConnect(to)
     await User.deleteMany({})
@@ -68,7 +71,7 @@ class Connect {
       return user2
     })
     User.insertMany(data, (err) => {
-      if (!err) console.log('exported.')
+      if (!err) console.log('imported.')
     })
   }
 
@@ -95,8 +98,9 @@ class Connect {
 
 const connect = new Connect()
 //connect.exportDb('DICTINARY_BOT_TS', 'dictionary_bot_ts')
+//connect.importDb('dictionary_bot_ts', 'DICTINARY_BOT_TS')
 
-connect.remoteConnect('dictionary_bot_ts')
-//connect.localConnect('DICTINARY_BOT_TS')
+//connect.remoteConnect('dictionary_bot_ts')
+connect.localConnect('DICTINARY_BOT_TS')
 
 export default User
