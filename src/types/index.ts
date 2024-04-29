@@ -18,10 +18,15 @@ export interface WordsGetObj {
   wordsIndex: number
   moreThan30: boolean
 }
+export interface DefsGetObj {
+  defs: Definition[] | null
+  defsIndex: number
+  moreThan30: boolean
+}
 export interface TestOptions {
   type: 'rus' | 'eng'
   index: number //i
-  wordsIndexes: number[] //array[i] = index of word pair,
+  wordsIndexes: number[] //array[i] = index of word pair
   answered: number
   answeredCorrectly: number
   answeredWrongly: number
@@ -30,4 +35,9 @@ export interface TestOptions {
 export interface ExampleOptions {
   type: 'rus' | 'eng'
   index: number
+}
+export interface Definition {
+  word: string
+  definition: string
+  synonyms: string[]
 }

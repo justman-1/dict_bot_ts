@@ -28,6 +28,17 @@ const userScheme = new Schema({
     ],
     required: true,
     default: []
+  },
+  definitions: {
+    type: [
+      {
+        word: { type: String, default: '' },
+        definition: { type: String, default: '' },
+        synonyms: { type: Array, default: [] }
+      }
+    ],
+    required: true,
+    default: []
   }
 })
 
@@ -94,6 +105,12 @@ class Connect {
       if (!err) console.log('exported.')
     })
   }
+
+  async showAllUsers() {
+    //929651012
+    const users = await User.find()
+    console.log(users[0].dict)
+  }
 }
 
 const connect = new Connect()
@@ -102,5 +119,6 @@ const connect = new Connect()
 
 //connect.remoteConnect('dictionary_bot_ts')
 connect.localConnect('DICTINARY_BOT_TS')
+//connect.showAllUsers()
 
 export default User

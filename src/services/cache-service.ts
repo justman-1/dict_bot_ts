@@ -1,10 +1,11 @@
-import { DictObj, ExampleOptions, TestOptions } from '../types'
+import { Definition, DictObj, ExampleOptions, TestOptions } from '../types'
 import { Cache, CacheClass } from 'memory-cache'
 var cacheDict: CacheClass<string, DictObj> = new Cache()
 var cacheStr: CacheClass<string, string | null> = new Cache()
 var cacheBool: CacheClass<string, boolean> = new Cache()
 var cacheTest: CacheClass<string, TestOptions> = new Cache()
 var cacheExample: CacheClass<string, ExampleOptions> = new Cache()
+var cacheDefinitions: CacheClass<string, Definition[]> = new Cache()
 
 class CacheCl {
   setUserState(chat_id: number, state: string | null): void {
@@ -106,6 +107,27 @@ class CacheCl {
 
   getExampleInfo(chat_id: number): ExampleOptions | null {
     return cacheExample.get('exampleOptions:' + chat_id)
+  }
+
+  setDefs(chat_id: number, defs: Definition[]): void {
+    cacheDefinitions.put('definitions:' + chat_id, defs)
+  }
+
+  getDefs(chat_id: number): Definition[] | null {
+    return cacheDefinitions.get('definitions:' + chat_id)
+  }
+  saveDef1(chat_id: number, word: string): void {
+    cacheStr.put('def1:' + chat_id, word)
+  }
+  saveDef2(chat_id: number, word: string): void {
+    cacheStr.put('def2:' + chat_id, word)
+  }
+  getAddDefs(chat_id: number): [string, string] | undefined {
+    const word: string = cacheStr.get('def1:' + chat_id) || ''
+    const translate: string = cacheStr.get('def2:' + chat_id) || ''
+    cacheStr.del('def1:' + chat_id)
+    cacheStr.del('def2:' + chat_id)
+    return [word.toLowerCase(), translate.toLowerCase()]
   }
 }
 

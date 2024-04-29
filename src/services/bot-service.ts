@@ -6,6 +6,7 @@ const {
   help_text,
   del_text,
   is_word_text,
+  cancel_word,
   success_save,
   buttonsAfterAdd,
   buttonsIsWord,
@@ -17,7 +18,16 @@ const {
   enterTranslate,
   buttonsAfterTest,
   addExampleButton,
-  example_added_text
+  example_added_text,
+  buttonsDef1,
+  buttonsDef,
+  buttonsDefWithout,
+  enterDefWord,
+  enterDefinition,
+  success_save_def,
+  buttonsDefAfterAdd,
+  del_def_text,
+  unsuccess_def_delete
 } = require('../configs/options')
 import Cache from './cache-service'
 import Dictionary from './dictionary-service'
@@ -25,6 +35,7 @@ import Forming from './forming-service'
 import { DictObj, TestOptions, WordObj } from '../types'
 import Test from './test-service'
 import Example from './example-test-service'
+import DefService from './definitions-service'
 
 class Bot {
   bot: TelegramBot
@@ -38,6 +49,9 @@ class Bot {
     type: 'rus' | 'eng'
   ) => Promise<void>
   addExample: (id: number, text: string) => Promise<void>
+  addDef: (msg: any) => any
+  addDefWord: (msg: any) => any
+  deleteDef: (msg: any) => any
   constructor(bot: TelegramBot) {
     this.bot = bot
     this.addWord = this.#addWord.bind(this)
@@ -47,6 +61,9 @@ class Bot {
     this.changeTranslate = this.#changeTranslate.bind(this)
     this.testWordAndAnswer = this.#testWordAndAnswer.bind(this)
     this.addExample = this.#addExample.bind(this)
+    this.addDef = this.#addDef.bind(this)
+    this.addDefWord = this.#addDefWord.bind(this)
+    this.deleteDef = this.#deleteDef.bind(this)
   }
 
   async start(msg: Message, id: number = msg.chat.id) {
@@ -64,6 +81,11 @@ class Bot {
   async add(msg: Message, id: number = msg.chat.id) {
     Cache.setUserState(id, 'add1')
     this.bot.sendMessage(id, enterEngWord)
+  }
+
+  async cancelWordAdd(msg: Message, id: number = msg.chat.id) {
+    Cache.setUserState(id, null)
+    this.bot.sendMessage(id, cancel_word, buttons)
   }
 
   async change(msg: Message, id: number = msg.chat.id) {
@@ -112,23 +134,55 @@ class Bot {
   async showDictionary(msg: Message, type: string, id: number = msg.chat.id) {
     await this.isReg(id)
     await Dictionary.updateWordsDate(id)
-    const [resultString, showFullAbility] = await Dictionary.show(id, type)
+    const [resultString, showFullIndex] = await Dictionary.show(id, type)
     this.bot.sendMessage(
       id,
       resultString,
-      showFullAbility ? buttonsWithoutDictFunc(type) : buttonsWithoutDict
+      showFullIndex != -1
+        ? buttonsWithoutDictFunc(type, showFullIndex)
+        : buttonsWithoutDict
     )
   }
 
   async showFullDictionary(
     msg: Message,
     type: string,
+    wordsIndex: number,
     id: number = msg.chat.id
   ) {
     await this.isReg(id)
     await Dictionary.updateWordsDate(id)
-    const resultString: string = await Dictionary.showFull(id, type)
-    this.bot.sendMessage(id, resultString, buttonsWithoutDict)
+    const [resultString, showFullIndex] = await Dictionary.showFull(
+      id,
+      type,
+      wordsIndex
+    )
+    this.bot.sendMessage(
+      id,
+      resultString,
+      showFullIndex != -1
+        ? buttonsWithoutDictFunc(type, showFullIndex)
+        : buttonsWithoutDict
+    )
+  }
+
+  async definitions(msg: Message, id: number = msg.chat.id) {
+    const [resultString, showFullIndex] = await DefService.show(id)
+    this.bot.sendMessage(
+      id,
+      resultString,
+      showFullIndex != -1 ? buttonsDef(showFullIndex) : buttonsDefWithout
+    )
+  }
+
+  async add_def(msg: Message, id: number = msg.chat.id) {
+    Cache.setUserState(id, 'add_def1')
+    this.bot.sendMessage(id, enterDefWord)
+  }
+
+  async del_def(msg: Message, id: number = msg.chat.id) {
+    Cache.setUserState(id, 'del_def')
+    this.bot.sendMessage(id, del_def_text)
   }
 
   async default(msg: any, id: number = msg.from.id, text: string = msg.text) {
@@ -160,6 +214,18 @@ class Bot {
 
       case 'add_example':
         this.#addExample(msg.chat.id, msg.text)
+        break
+
+      case 'add_def1':
+        this.addDefWord(msg)
+        break
+
+      case 'add_def2':
+        this.addDef(msg)
+        break
+
+      case 'del_def':
+        this.deleteDef(msg)
         break
     }
   }
@@ -247,6 +313,50 @@ class Bot {
       const result = await Test.testWordAndAnswer(id, null, options.type)
       this.bot.sendMessage(id, result[2] || 'err')
     }
+  }
+
+  async #addDefWord(
+    msg: any,
+    word: string = msg.text,
+    id: number = msg.chat.id
+  ) {
+    await this.isReg(id)
+    Cache.saveDef1(id, word)
+    const isWord: boolean = await DefService.isWord(id, word)
+    if (isWord) {
+      Cache.setUserState(id, null)
+      return this.bot.sendMessage(id, is_word_text, buttonsIsWord)
+    }
+    Cache.setUserState(id, 'add_def2')
+    this.bot.sendMessage(id, enterDefinition)
+  }
+
+  async #addDef(msg: any, word: string = msg.text, id: number = msg.chat.id) {
+    await this.isReg(id)
+    Cache.saveDef2(id, word)
+    Cache.setUserState(id, null)
+    await DefService.saveDef(id)
+    this.bot.sendMessage(id, success_save_def, buttonsDefAfterAdd)
+  }
+
+  async #deleteDef(
+    msg: any,
+    text: string = msg.text,
+    id: number = msg.chat.id
+  ) {
+    await this.isReg(id)
+    console.log(text)
+    const deletedWordsNum: number = await DefService.deleteDef(id, text)
+    console.log(111111111111111111111111)
+    Cache.setUserState(id, null)
+    console.log(2222222222222222222222222)
+    if (deletedWordsNum > 0) {
+      console.log(333333333333333333333)
+      this.bot.sendMessage(id, success_delete, buttonsDef1)
+      return console.log(44444444444444444444444)
+    }
+    this.bot.sendMessage(id, unsuccess_def_delete, buttonsDef1)
+    return console.log(555555555555555)
   }
 }
 

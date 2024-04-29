@@ -24,20 +24,24 @@ class Controllers {
     Bot.showDictionary(msg, 'rus')
   }
 
-  dictFull(msg: Message) {
-    Bot.showFullDictionary(msg, 'default')
+  dictMore(msg: Message, wordsIndex: string) {
+    Bot.showFullDictionary(msg, 'default', parseInt(wordsIndex))
   }
 
-  engFull(msg: Message) {
-    Bot.showFullDictionary(msg, 'eng')
+  engMore(msg: Message, wordsIndex: string) {
+    Bot.showFullDictionary(msg, 'eng', parseInt(wordsIndex))
   }
 
-  rusFull(msg: Message) {
-    Bot.showFullDictionary(msg, 'rus')
+  rusMore(msg: Message, wordsIndex: string) {
+    Bot.showFullDictionary(msg, 'rus', parseInt(wordsIndex))
   }
 
   add(msg: Message) {
     Bot.add(msg)
+  }
+
+  cancelWordAdd(msg: Message) {
+    Bot.cancelWordAdd(msg)
   }
 
   change(msg: Message) {
@@ -66,6 +70,18 @@ class Controllers {
 
   add_example(msg: Message) {
     Bot.add_example(msg)
+  }
+
+  definitions(msg: Message) {
+    Bot.definitions(msg)
+  }
+
+  add_def(msg: Message) {
+    Bot.add_def(msg)
+  }
+
+  del_def(msg: Message) {
+    Bot.del_def(msg)
   }
 
   error(err: any) {

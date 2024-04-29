@@ -161,9 +161,21 @@ class Test {
   ): Promise<[boolean, string | null]> {
     word = word.toLowerCase()
     let wordsCheck = wordPairCheck.words[type == 'eng' ? 1 : 0].split('/')
-    let testSucceed: boolean = wordsCheck.find((e) =>
-      Forming.areWordsSimilar(e, word)
-    )
+    let testSucceed: boolean = wordsCheck.find((e) => {
+      let result = true
+      const checkingWords: string[] = e.split(' ')
+      const enteredWords: string[] = word.split(' ')
+      for (let i = 0; i < checkingWords.length; i++) {
+        if (
+          !enteredWords[i] ||
+          !Forming.areWordsSimilar(checkingWords[i], enteredWords[i])
+        ) {
+          result = false
+          break
+        }
+      }
+      return result
+    })
       ? true
       : false
     if (testSucceed) {
@@ -220,6 +232,7 @@ class Test {
       words[wordIndex].tested_rus = addOrNot
         ? words[wordIndex].tested_rus + 1
         : 0
+    if (words[wordIndex].tested_eng == 2) words[wordIndex].date = new Date()
     Dictionary.saveDictionary(id, words)
     return type == 'eng'
       ? words[wordIndex].tested_eng

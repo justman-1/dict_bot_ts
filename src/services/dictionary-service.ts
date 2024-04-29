@@ -16,7 +16,7 @@ class Dictionary {
     this.saveDictionary = this.#saveDictionary.bind(this)
   }
 
-  async show(id: number, type: string): Promise<[string, boolean]> {
+  async show(id: number, type: string): Promise<[string, number]> {
     const { words, wordsIndex, moreThan30 }: WordsGetObj =
       await this.getLast30Words(id)
     if (words && words.length != 0) {
@@ -25,19 +25,32 @@ class Dictionary {
         wordsIndex,
         type
       )
-      return [wordsStr, moreThan30]
+      return [wordsStr, moreThan30 ? wordsIndex : -1]
     } else {
-      return ['Ваш словарь пуст', false]
+      return ['Ваш словарь пуст', -1]
     }
   }
 
-  async showFull(id: number, type: string): Promise<string> {
+  async showFull(
+    id: number,
+    type: string,
+    wordsIndex: number
+  ): Promise<[string, number]> {
     const words: DictObj = await this.getAllWords(id)
+    const startIndex = wordsIndex > 50 ? wordsIndex - 50 : 0
+    const preparedWords = words.slice(
+      startIndex,
+      wordsIndex < words.length ? wordsIndex : words.length - 1
+    )
     if (words && words.length != 0) {
-      let wordsStr: string = Forming.formWordsShowToString(words, 0, type)
-      return wordsStr
+      let wordsStr: string = Forming.formWordsShowToString(
+        preparedWords,
+        startIndex,
+        type
+      )
+      return [wordsStr, startIndex > 0 ? startIndex : -1]
     } else {
-      return 'Ваш словарь пуст'
+      return ['Ваш словарь пуст', -1]
     }
   }
 
@@ -99,19 +112,13 @@ class Dictionary {
   async updateWordsDate(id: number): Promise<void> {
     let words: DictObj = await this.getDictionaryObj(id)
     const newWords = words.map((e) => {
-      if (e.tested_eng == 2 && e.checked != 4) {
+      if (e.tested_eng == 2 && e.checked < 3) {
         if (e.checked == 0) {
           e.checked = 1
         }
         const now = new Date()
         const diff =
-          e.checked == 1
-            ? 86400000
-            : e.checked == 2
-            ? 7 * 86400000
-            : e.checked == 3
-            ? 14 * 86400000
-            : 0
+          e.checked == 1 ? 86400000 : e.checked == 2 ? 7 * 86400000 : -1
         if (now.getTime() - e.date.getTime() > diff) {
           e.checked += 1
           e.date = now

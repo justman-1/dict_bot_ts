@@ -45,6 +45,18 @@ bot.on('message', async (msg: any) => {
         Controllers.stoptest(msg)
         break
 
+      case '/defs':
+        Controllers.definitions(msg)
+        break
+
+      case '/add_def':
+        Controllers.add_def(msg)
+        break
+
+      case '/del_def':
+        Controllers.del_def(msg)
+        break
+
       default:
         Controllers.default(msg)
     }
@@ -54,21 +66,22 @@ bot.on('message', async (msg: any) => {
 })
 
 bot.on('callback_query', async (query: any) => {
-  switch (query.data) {
+  const queryParts: string[] = query.data.split(' ')
+  switch (queryParts[0]) {
     case 'dict':
       await Controllers.dict(query.message)
       break
 
-    case 'dictFull':
-      await Controllers.dictFull(query.message)
+    case 'dictMore':
+      await Controllers.dictMore(query.message, queryParts[1])
       break
 
-    case 'engFull':
-      await Controllers.engFull(query.message)
+    case 'engMore':
+      await Controllers.engMore(query.message, queryParts[1])
       break
 
-    case 'rusFull':
-      await Controllers.rusFull(query.message)
+    case 'rusMore':
+      await Controllers.rusMore(query.message, queryParts[1])
       break
 
     case 'add':
@@ -80,7 +93,7 @@ bot.on('callback_query', async (query: any) => {
       break
 
     case 'cancelWord':
-      await Controllers.help(query.message)
+      await Controllers.cancelWordAdd(query.message)
       break
 
     case 'delete':
@@ -93,6 +106,18 @@ bot.on('callback_query', async (query: any) => {
 
     case 'add_example':
       await Controllers.add_example(query.message)
+      break
+
+    case 'defs':
+      await Controllers.definitions(query.message)
+      break
+
+    case 'add_def':
+      await Controllers.add_def(query.message)
+      break
+
+    case 'delete_def':
+      Controllers.del_def(query.message)
       break
   }
   bot.answerCallbackQuery(query.id)

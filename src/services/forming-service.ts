@@ -1,4 +1,4 @@
-import { DictObj } from '../types'
+import { Definition, DictObj } from '../types'
 import stringSimilarity from 'string-similarity'
 
 class Forming {
@@ -22,7 +22,7 @@ class Forming {
         : type == 'eng'
         ? 'Английские слова из вашего словаря'
         : 'Переводы слов из вашего словаря'
-    }${wordsIndex != 0 ? '(последние 30 слов)' : ''}: \n`
+    }: \n`
     dict.forEach((part, index) => {
       const state_eng: string =
         part.tested_eng == 0 ? '' : part.tested_eng == 1 ? ' ⚪' : ' ✅'
@@ -32,7 +32,7 @@ class Forming {
       wordsStr +=
         +index +
         +1 +
-        wordsIndex +
+        +wordsIndex +
         '. ' +
         (type == 'default'
           ? part.words[0] + ' - ' + part.words[1] + state
@@ -44,7 +44,10 @@ class Forming {
     return wordsStr
   }
 
-  formDeleteIndexesToArray(indexesStr: string, dict: DictObj): number[] {
+  formDeleteIndexesToArray(
+    indexesStr: string,
+    dict: DictObj | Definition[]
+  ): number[] {
     let indexes: number[] = []
     const numbers: any[] = indexesStr
       .split(' ')
@@ -115,6 +118,22 @@ class Forming {
   /**#lemRu(word: string): string {
     return stemmer.stem(tokenizer.tokenize(word)[0])
   }**/
+
+  formDefsShowToString(defs: Definition[], defsIndex: number): string {
+    let defsStr = `Ваши определения: \n`
+    defs.forEach((part, index) => {
+      defsStr +=
+        +index +
+        +1 +
+        +defsIndex +
+        '. ' +
+        part.word +
+        ' - ' +
+        part.definition +
+        ' \n'
+    })
+    return defsStr
+  }
 
   #formDeleteRangesToArray(indexesStr: string): number[] {
     const ranges: (number[] | undefined)[] =
